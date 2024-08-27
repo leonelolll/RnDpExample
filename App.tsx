@@ -1,117 +1,92 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Linking, Alert } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import urlParse from 'url-parse';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+function FirstScreen() {
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={styles.centerTextContainer}>
+      <Text>First</Text>
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+function SecondScreen() {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.centerTextContainer}>
+      <Text>Second</Text>
+    </View>
   );
 }
 
+function ThirdScreen(props: {route: { params: any; };}) {
+  return (
+    <View style={styles.centerTextContainer}>
+      <Text>Third , Params: {JSON.stringify(props.route.params)}</Text>
+    </View>
+  );
+}
+
+const Tab = createBottomTabNavigator();
+
+const App = () => {
+
+  let navigationRef: { navigate: (arg0: string | (string | null)[] | null, arg1: { params: string | (string | null)[] | null; }) => void; };
+
+  function intiNavigation(ref: { navigate: (arg0: string | (string | null)[] | null, arg1: { params: string | (string | null)[] | null; }) => void; }) {
+    if (ref) {
+      navigationRef = ref;
+      // handle deep link that app isn't launched
+      Linking.getInitialURL().then((url) => {
+        console.log("2. url: " + url);
+        handleDeepLink({url});
+      });
+    }
+  }
+
+  function handleDeepLink({url}) {
+    if (url) {
+      const parsedUrl = urlParse(url, true);
+      console.log(parsedUrl);
+      // use host as route name and query as navigation params
+      if(parsedUrl){
+          navigationRef.navigate({
+            name: parsedUrl.host,
+            params: parsedUrl.query,
+        });
+      }
+    }
+  }
+  
+
+  useEffect(() => {
+    // add deep link listener to handle deep link after app is launched
+    Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      Linking.removeAllListeners('url', handleDeepLink);
+    };
+  });
+  
+
+  return (
+    <NavigationContainer ref={intiNavigation}>
+      <Tab.Navigator>
+        <Tab.Screen name="first" component={FirstScreen} />
+        <Tab.Screen name="second" component={SecondScreen} />
+        <Tab.Screen name="third" component={ThirdScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
+};
+
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  centerTextContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
